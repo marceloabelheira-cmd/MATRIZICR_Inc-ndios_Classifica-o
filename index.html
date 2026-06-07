@@ -570,12 +570,13 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   color:var(--gray-600);transition:all .15s;
 }
 .filter-btn:hover{border-color:var(--gray-500);color:var(--gray-800)}
-.filter-btn.fa{border-color:var(--navy);background:var(--navy);color:#fff}
-.filter-btn.f1{border-color:var(--g1-border);background:var(--g1-light);color:var(--g1)}
+.filter-btn.fa{border-color:var(--navy);background:var(--white);color:var(--navy)}
+.filter-btn.fa.active{background:var(--navy);color:#fff}
+.filter-btn.f1{border-color:var(--g1-border);background:var(--white);color:var(--g1)}
 .filter-btn.f1.active{background:var(--g1);border-color:var(--g1);color:#fff}
-.filter-btn.f2{border-color:var(--g2-border);background:var(--g2-light);color:var(--g2)}
+.filter-btn.f2{border-color:var(--g2-border);background:var(--white);color:var(--g2)}
 .filter-btn.f2.active{background:var(--g2);border-color:var(--g2);color:#fff}
-.filter-btn.f3{border-color:var(--g3-border);background:var(--g3-light);color:var(--g3)}
+.filter-btn.f3{border-color:var(--g3-border);background:var(--white);color:var(--g3)}
 .filter-btn.f3.active{background:var(--g3);border-color:var(--g3);color:#fff}
 
 .stats-row{
@@ -663,6 +664,15 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   .lista-topbar{flex-direction:column;align-items:flex-start}
   .lista-table th:nth-child(3),.lista-table td:nth-child(3){display:none}
 }
+
+/* ══ ORDENAÇÃO DA TABELA ══ */
+.th-sort{cursor:pointer;user-select:none;white-space:nowrap}
+.th-sort:hover{background:#243459}
+.th-sort .sort-icon{display:inline-block;margin-left:5px;opacity:.45;font-size:11px;vertical-align:middle;transition:opacity .15s}
+.th-sort.asc .sort-icon::after{content:'↑';opacity:1}
+.th-sort.desc .sort-icon::after{content:'↓';opacity:1}
+.th-sort:not(.asc):not(.desc) .sort-icon::after{content:'↕'}
+.th-sort.asc .sort-icon,.th-sort.desc .sort-icon{opacity:1}
 </style>
 </head>
 <body>
@@ -852,11 +862,12 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
         <div class="lista-title">Eventos Classificados</div>
       </div>
       <div class="lista-actions">
-        <div class="filter-btns">
-          <button class="filter-btn fa active" onclick="filtrar('todos')">Todos</button>
-          <button class="filter-btn f1" onclick="filtrar(1)">Grau 1</button>
-          <button class="filter-btn f2" onclick="filtrar(2)">Grau 2</button>
-          <button class="filter-btn f3" onclick="filtrar(3)">Grau 3</button>
+        <div class="filter-btns" style="align-items:center;gap:8px">
+          <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Filtrar:</span>
+          <button class="filter-btn fa active" id="fbtn-todos" onclick="toggleFiltro('todos')" title="Mostrar todos">Todos</button>
+          <button class="filter-btn f1" id="fbtn-1" onclick="toggleFiltro(1)" title="Grau 1 — Moderado">Grau 1</button>
+          <button class="filter-btn f2" id="fbtn-2" onclick="toggleFiltro(2)" title="Grau 2 — Alto">Grau 2</button>
+          <button class="filter-btn f3" id="fbtn-3" onclick="toggleFiltro(3)" title="Grau 3 — Muito Alto">Grau 3</button>
         </div>
         <button class="btn-csv" onclick="exportarCSV()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -891,10 +902,10 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
         <thead>
           <tr>
             <th>Identificação do Evento</th>
-            <th>Início</th>
+            <th class="th-sort" id="th-inicio" onclick="ordenarPor('dtInicio')" title="Ordenar por data de início">Início<span class="sort-icon"></span></th>
             <th>Término</th>
             <th>Local / Região</th>
-            <th style="text-align:center">Classificação</th>
+            <th class="th-sort" id="th-grau" onclick="ordenarPor('grau')" title="Ordenar por grau de impacto" style="text-align:center">Classificação<span class="sort-icon"></span></th>
             <th style="text-align:center">Ações</th>
           </tr>
         </thead>
@@ -1343,7 +1354,9 @@ function atualizarBadge() {
 }
 
 // ══ SALVAR CLASSIFICAÇÃO ══
-let filtroAtivo = 'todos';
+let filtrosAtivos = new Set([1, 2, 3]); // todos ativos por padrão
+let sortCampo = null;   // 'dtInicio' | 'grau'
+let sortDir = 'desc';   // 'asc' | 'desc'
 
 function salvarEvento() {
   const gs = DATA.map(c => grauCrit(c));
@@ -1394,12 +1407,49 @@ function salvarEvento() {
 }
 
 // ══ RENDER LISTA ══
-function renderLista() {
-  const evts = carregarEventos();
-  const filtrados = filtroAtivo === 'todos' ? evts : evts.filter(e => e.grau === filtroAtivo);
+function ordenarPor(campo) {
+  if (sortCampo === campo) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCampo = campo;
+    sortDir = campo === 'grau' ? 'desc' : 'asc';
+  }
+  // Atualizar visual dos th
+  ['th-inicio','th-grau'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('asc','desc');
+  });
+  const activeId = campo === 'dtInicio' ? 'th-inicio' : 'th-grau';
+  const activeEl = document.getElementById(activeId);
+  if (activeEl) activeEl.classList.add(sortDir);
+  renderLista();
+}
 
-  // Stats
-  document.getElementById('stat-total').textContent = evts.length;
+function renderLista() {
+  let evts = carregarEventos();
+  // Filtro por grau
+  const filtrados = evts.filter(e => filtrosAtivos.has(e.grau));
+  // Ordenação
+  if (sortCampo) {
+    filtrados.sort((a, b) => {
+      let va, vb;
+      if (sortCampo === 'dtInicio') {
+        va = a.dtInicio || '';
+        vb = b.dtInicio || '';
+      } else if (sortCampo === 'grau') {
+        va = a.grau || 0;
+        vb = b.grau || 0;
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  // Stats (sempre sobre todos os eventos, não filtrados)
+  const todos = carregarEventos();
+  document.getElementById('stat-total').textContent = todos.length;
   document.getElementById('stat-g1').textContent = evts.filter(e=>e.grau===1).length;
   document.getElementById('stat-g2').textContent = evts.filter(e=>e.grau===2).length;
   document.getElementById('stat-g3').textContent = evts.filter(e=>e.grau===3).length;
@@ -1441,17 +1491,31 @@ function renderLista() {
     </tr>`).join('');
 }
 
-function filtrar(grau) {
-  filtroAtivo = grau;
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.remove('active');
-  });
-  const map = {'todos':'fa',1:'f1',2:'f2',3:'f3'};
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    if ((grau==='todos' && b.classList.contains('fa')) ||
-        (b.classList.contains('f'+grau))) b.classList.add('active');
-  });
+function toggleFiltro(grau) {
+  if (grau === 'todos') {
+    // "Todos" ativa os 3 graus ao mesmo tempo
+    filtrosAtivos = new Set([1, 2, 3]);
+  } else {
+    if (filtrosAtivos.has(grau)) {
+      filtrosAtivos.delete(grau);
+      // Se ficou vazio, volta a selecionar todos
+      if (filtrosAtivos.size === 0) filtrosAtivos = new Set([1, 2, 3]);
+    } else {
+      filtrosAtivos.add(grau);
+    }
+  }
+  atualizarBotoesFiltro();
   renderLista();
+}
+
+function atualizarBotoesFiltro() {
+  const todos = filtrosAtivos.has(1) && filtrosAtivos.has(2) && filtrosAtivos.has(3);
+  const todosBtn = document.getElementById('fbtn-todos');
+  if (todosBtn) todosBtn.classList.toggle('active', todos);
+  [1,2,3].forEach(g => {
+    const btn = document.getElementById('fbtn-'+g);
+    if (btn) btn.classList.toggle('active', filtrosAtivos.has(g));
+  });
 }
 
 function excluirEvento(id) {
