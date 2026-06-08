@@ -867,12 +867,20 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
         <div class="lista-title">Eventos Classificados</div>
       </div>
       <div class="lista-actions">
-        <div class="filter-btns" style="align-items:center;gap:8px">
-          <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Filtrar:</span>
-          <button class="filter-btn fa active" id="fbtn-todos" onclick="toggleFiltro('todos')" title="Mostrar todos">Todos</button>
-          <button class="filter-btn f1" id="fbtn-1" onclick="toggleFiltro(1)" title="Grau 1 — Moderado">Grau 1</button>
-          <button class="filter-btn f2" id="fbtn-2" onclick="toggleFiltro(2)" title="Grau 2 — Alto">Grau 2</button>
-          <button class="filter-btn f3" id="fbtn-3" onclick="toggleFiltro(3)" title="Grau 3 — Muito Alto">Grau 3</button>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <div class="filter-btns" style="align-items:center;gap:8px">
+            <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Grau:</span>
+            <button class="filter-btn fa active" id="fbtn-todos" onclick="toggleFiltro('todos')" title="Mostrar todos os graus">Todos</button>
+            <button class="filter-btn f1" id="fbtn-1" onclick="toggleFiltro(1)" title="Grau 1 — Moderado">Grau 1</button>
+            <button class="filter-btn f2" id="fbtn-2" onclick="toggleFiltro(2)" title="Grau 2 — Alto">Grau 2</button>
+            <button class="filter-btn f3" id="fbtn-3" onclick="toggleFiltro(3)" title="Grau 3 — Muito Alto">Grau 3</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Ano:</span>
+            <select id="select-ano" onchange="filtrarAno(this.value)" style="font-family:var(--sans);font-size:12px;font-weight:600;padding:5px 28px 5px 12px;border-radius:var(--r-full);border:1.5px solid var(--gray-300);background:var(--white);color:var(--gray-700);cursor:pointer;outline:none;appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23656d73%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s">
+              <option value="todos">Todos os anos</option>
+            </select>
+          </div>
         </div>
         <button class="btn-csv" onclick="exportarCSV()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1336,7 +1344,7 @@ function irPara(tela) {
   document.getElementById('screen-lista').className = 'screen' + (tela==='lista'?' show':'');
   document.getElementById('tab-form').className = 'nav-tab' + (tela==='form'?' active':'');
   document.getElementById('tab-lista').className = 'nav-tab' + (tela==='lista'?' active':'');
-  if (tela==='lista') renderLista();
+  if (tela==='lista') { renderLista(); popularSelectAno(); }
 }
 
 // ══ STORAGE DE EVENTOS ══
@@ -1361,6 +1369,7 @@ function atualizarBadge() {
 
 // ══ SALVAR CLASSIFICAÇÃO ══
 let filtrosAtivos = new Set([1, 2, 3]); // todos ativos por padrão
+let filtroAno = 'todos'; // filtro de ano
 let sortCampo = null;   // 'dtInicio' | 'grau'
 let sortDir = 'desc';   // 'asc' | 'desc'
 
@@ -1406,6 +1415,7 @@ function salvarEvento() {
     evts2.unshift(registro);
   }
   salvarEventos(evts2);
+  popularSelectAno();
 
   const btn = document.getElementById('btn-save');
   btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Salvo!';
@@ -1434,10 +1444,38 @@ function ordenarPor(campo) {
   renderLista();
 }
 
+function popularSelectAno() {
+  const evts = carregarEventos();
+  const anos = [...new Set(evts
+    .map(e => e.dtInicio ? new Date(e.dtInicio + 'T12:00').getFullYear() : null)
+    .filter(Boolean)
+  )].sort((a,b) => b - a);
+  const sel = document.getElementById('select-ano');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="todos">Todos os anos</option>' +
+    anos.map(a => `<option value="${a}"${String(a)===current?'selected':''}>${a}</option>`).join('');
+  if (filtroAno !== 'todos' && !anos.includes(parseInt(filtroAno))) filtroAno = 'todos';
+}
+
+function filtrarAno(ano) {
+  filtroAno = ano;
+  renderLista();
+}
+
 function renderLista() {
   let evts = carregarEventos();
   // Filtro por grau
-  const filtrados = evts.filter(e => filtrosAtivos.has(e.grau));
+  let filtrados = evts.filter(e => filtrosAtivos.has(e.grau));
+  // Filtro por ano
+  if (filtroAno !== 'todos') {
+    filtrados = filtrados.filter(e => {
+      if (!e.dtInicio) return false;
+      return new Date(e.dtInicio + 'T12:00').getFullYear() === parseInt(filtroAno);
+    });
+  }
+  // Atualizar select de anos
+  popularSelectAno();
   // Ordenação
   if (sortCampo) {
     filtrados.sort((a, b) => {
