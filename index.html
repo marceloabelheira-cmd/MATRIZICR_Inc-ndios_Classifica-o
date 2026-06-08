@@ -674,7 +674,70 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 .th-sort.desc .sort-icon::after{content:'↓';opacity:1}
 .th-sort:not(.asc):not(.desc) .sort-icon::after{content:'↕'}
 .th-sort.asc .sort-icon,.th-sort.desc .sort-icon{opacity:1}
+
+/* ══ ALERTA GRAU NÃO ATINGIDO ══ */
+.alerta-grau{
+  position:fixed;top:80px;left:50%;transform:translateX(-50%);
+  background:#fff;border:2px solid var(--g2);border-radius:var(--r);
+  box-shadow:var(--sh-md);padding:16px 20px;z-index:9999;
+  max-width:380px;width:90%;
+  display:flex;align-items:flex-start;gap:12px;
+  animation:slideDown .25s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateX(-50%) translateY(-16px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.alerta-grau-icon{width:36px;height:36px;border-radius:50%;background:var(--g2-light);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.alerta-grau-body{flex:1}
+.alerta-grau-title{font-size:13px;font-weight:700;color:var(--g2);margin-bottom:3px}
+.alerta-grau-msg{font-size:12px;color:var(--gray-600);line-height:1.45}
+.alerta-grau-close{background:none;border:none;cursor:pointer;color:var(--gray-400);
+  font-size:18px;line-height:1;flex-shrink:0;padding:0 2px;transition:color .15s}
+.alerta-grau-close:hover{color:var(--g2)}
 </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, push, set, remove, onValue, off }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzKSDFKqaHei90bDR9haUxaobp49zP0PU",
+      authDomain: "matriz-icr-if.firebaseapp.com",
+      databaseURL: "https://matriz-icr-if-default-rtdb.firebaseio.com",
+      projectId: "matriz-icr-if",
+      storageBucket: "matriz-icr-if.firebasestorage.app",
+      messagingSenderId: "254551913455",
+      appId: "1:254551913455:web:70c3a6f7c0a92f1584fc1a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+
+    // Expor para o escopo global (usados pelo código legado)
+    window._fbDb     = db;
+    window._fbRef    = ref;
+    window._fbPush   = push;
+    window._fbSet    = set;
+    window._fbRemove = remove;
+    window._fbOnValue = onValue;
+    window._fbOff    = off;
+
+    // Listener em tempo real — atualiza lista e badge sempre que /eventos mudar
+    const eventosRef = ref(db, '/eventos');
+    onValue(eventosRef, (snapshot) => {
+      const raw = snapshot.val() || {};
+      // Converter objeto Firebase → array ordenado por savedAt desc
+      const arr = Object.entries(raw).map(([fbKey, v]) => ({ ...v, _fbKey: fbKey }));
+      arr.sort((a, b) => (b.savedAt || '').localeCompare(a.savedAt || ''));
+      window._cachedEventos = arr;
+      atualizarBadge();
+      // Re-renderizar lista se estiver visível
+      if (document.getElementById('screen-lista').classList.contains('show')) {
+        renderLista();
+        popularSelectAno();
+      }
+    });
+  </script>
 </head>
 <body>
 
@@ -933,6 +996,18 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
     </div>
   </div>
 </div><!-- /screen-lista -->
+
+<!-- ALERTA GRAU -->
+<div class="alerta-grau" id="alerta-grau" style="display:none">
+  <div class="alerta-grau-icon">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </div>
+  <div class="alerta-grau-body">
+    <div class="alerta-grau-title">Classificação insuficiente</div>
+    <div class="alerta-grau-msg">O evento não atingiu o mínimo de 3 critérios em Grau 1 ou superior. Preencha mais critérios para salvar.</div>
+  </div>
+  <button class="alerta-grau-close" onclick="fecharAlertaGrau()">×</button>
+</div>
 
 <!-- MODAL MAPA -->
 <div class="map-modal-bg" id="map-bg" style="display:none" onclick="fecharMapa(event)">
@@ -1348,14 +1423,13 @@ function irPara(tela) {
 }
 
 // ══ STORAGE DE EVENTOS ══
+// ── Cache local populado pelo listener do Firebase ──
+window._cachedEventos = [];
+
 function carregarEventos() {
-  try { return JSON.parse(localStorage.getItem('icr_eventos')||'[]'); }
-  catch(e) { return []; }
+  return window._cachedEventos || [];
 }
-function salvarEventos(evts) {
-  localStorage.setItem('icr_eventos', JSON.stringify(evts));
-  atualizarBadge();
-}
+
 function atualizarBadge() {
   const evts = carregarEventos();
   const badge = document.getElementById('lista-count-badge');
@@ -1382,8 +1456,6 @@ function salvarEvento() {
   let final = 0;
   if (filled >= 3) { if(c3>=3) final=3; else if(c2>=3) final=2; else if(c1>=3) final=1; }
 
-  if (final === 0) return;
-
   const evt = document.getElementById('evt-id').value.trim() || '(sem identificação)';
   const dtI = document.getElementById('dt-inicio').value;
   const dtF = document.getElementById('dt-fim').value;
@@ -1404,18 +1476,31 @@ function salvarEvento() {
     savedAt: new Date().toISOString()
   };
 
-  const evts = carregarEventos();
+  // Validação: só salvar se atingiu Grau 1, 2 ou 3
+  if (final === 0) {
+    mostrarAlertaGrau();
+    return;
+  }
+
   const editId = document.getElementById('btn-save').dataset.editId;
-  let evts2;
+  const db = window._fbDb;
+  const fbRef = window._fbRef;
+  const fbSet = window._fbSet;
+  const fbPush = window._fbPush;
+
+  if (!db) { alert('Firebase não inicializado. Verifique a conexão.'); return; }
+
   if (editId) {
-    evts2 = carregarEventos().map(e => e.id === parseInt(editId) ? {...registro, id:parseInt(editId)} : e);
+    // Atualizar registro existente (mesmo fbKey)
+    const existente = carregarEventos().find(e => e._fbKey === editId);
+    if (existente) {
+      fbSet(fbRef(db, '/eventos/' + editId), { ...registro, id: existente.id });
+    }
     delete document.getElementById('btn-save').dataset.editId;
   } else {
-    evts2 = carregarEventos();
-    evts2.unshift(registro);
+    // Novo registro
+    fbPush(fbRef(db, '/eventos'), registro);
   }
-  salvarEventos(evts2);
-  popularSelectAno();
 
   const btn = document.getElementById('btn-save');
   btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Salvo!';
@@ -1567,9 +1652,12 @@ function atualizarBotoesFiltro() {
 
 function excluirEvento(id) {
   if (!confirm('Excluir este registro?')) return;
-  const evts = carregarEventos().filter(e => e.id !== id);
-  salvarEventos(evts);
-  renderLista();
+  const evt = carregarEventos().find(e => e.id === id || e._fbKey === String(id));
+  if (!evt || !evt._fbKey) return;
+  const db = window._fbDb; const fbRef = window._fbRef; const fbRemove = window._fbRemove;
+  if (!db) return;
+  fbRemove(fbRef(db, '/eventos/' + evt._fbKey));
+  // A lista atualiza automaticamente pelo onValue listener
 }
 
 function editarEvento(id) {
@@ -1619,7 +1707,7 @@ function editarEvento(id) {
   }
 
   // Marcar o evento em edição para sobrescrever ao salvar
-  document.getElementById('btn-save').dataset.editId = id;
+  document.getElementById('btn-save').dataset.editId = evt._fbKey || id;
 
   recalc();
   irPara('form');
@@ -1736,8 +1824,18 @@ recalc = function() {
   }
 };
 
-// Init
-atualizarBadge();
+// Init — badge e lista são gerenciados pelo listener do Firebase
+
+function mostrarAlertaGrau() {
+  const el = document.getElementById('alerta-grau');
+  el.style.display = 'flex';
+  clearTimeout(window._alertaTimer);
+  window._alertaTimer = setTimeout(() => fecharAlertaGrau(), 4500);
+}
+function fecharAlertaGrau() {
+  document.getElementById('alerta-grau').style.display = 'none';
+}
+
 
 </script>
 </body>
