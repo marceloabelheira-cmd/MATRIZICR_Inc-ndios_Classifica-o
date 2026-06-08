@@ -433,6 +433,7 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
   .lista-table th:nth-child(3),.lista-table td:nth-child(3),
   .lista-table th:nth-child(4),.lista-table td:nth-child(4){display:none}
+  .lista-table th:nth-child(5),.lista-table td:nth-child(5){display:none}
   .stat-val{font-size:20px}
 }
 
@@ -721,6 +722,10 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
         Análise por IA — Cole notícia ou texto
       </div>
       <div class="panel-body">
+        <div class="field-row" style="margin-bottom:8px">
+          <label class="field-lbl" for="ai-link" style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-500);display:block;margin-bottom:5px">Link da reportagem / fonte</label>
+          <input class="field-input" id="ai-link" type="url" placeholder="https://..." style="font-size:12px;padding:7px 10px">
+        </div>
         <textarea class="ai-textarea" id="ai-input" placeholder="Cole aqui o texto da notícia, boletim ou relatório sobre o incêndio...&#10;&#10;A IA irá identificar os critérios e sugerir os graus."></textarea>
         <button class="btn-ai" id="btn-ai" onclick="analisarIA()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -905,6 +910,7 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
             <th class="th-sort" id="th-inicio" onclick="ordenarPor('dtInicio')" title="Ordenar por data de início">Início<span class="sort-icon"></span></th>
             <th>Término</th>
             <th>Local / Região</th>
+            <th>Reportagem</th>
             <th class="th-sort" id="th-grau" onclick="ordenarPor('grau')" title="Ordenar por grau de impacto" style="text-align:center">Classificação<span class="sort-icon"></span></th>
             <th style="text-align:center">Ações</th>
           </tr>
@@ -1085,7 +1091,7 @@ document.getElementById("local-input").addEventListener("input",function(){
 function resetar(){
   Object.keys(state).forEach(k=>state[k]=null);
   document.querySelectorAll(".opt").forEach(el=>el.className="opt");
-  ["obs","evt-id","local-input","map-search"].forEach(id=>document.getElementById(id).value="");
+  ["obs","evt-id","local-input","map-search","ai-link","ai-input"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=""});
   ["dt-inicio","dt-fim"].forEach(id=>document.getElementById(id).value="");
   document.getElementById("duracao-display").style.display="none";
   document.getElementById("local-display").style.display="none";
@@ -1375,6 +1381,7 @@ function salvarEvento() {
   const local = document.getElementById('local-input').value.trim() || '';
   const obs = document.getElementById('obs').value.trim() || '';
 
+  const link = document.getElementById('ai-link') ? document.getElementById('ai-link').value.trim() : '';
   const registro = {
     id: Date.now(),
     evento: evt,
@@ -1383,6 +1390,7 @@ function salvarEvento() {
     local: local,
     grau: final,
     obs: obs,
+    link: link,
     detalhes: DATA.map((c,i) => ({criterio:c.id, nome:c.nome, grau:gs[i]})),
     savedAt: new Date().toISOString()
   };
@@ -1477,6 +1485,7 @@ function renderLista() {
       <td>${fmt(e.dtInicio)}</td>
       <td>${fmt(e.dtFim)}</td>
       <td><div class="td-local" title="${e.local||''}">${e.local||'—'}</div></td>
+      <td style="text-align:center">${e.link ? `<a href="${e.link}" target="_blank" title="${e.link}" style="color:var(--blue);font-size:12px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;font-weight:500"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ver</a>` : '<span style="color:var(--gray-400);font-size:12px">—</span>'}</td>
       <td class="td-action"><span class="grau-pill ${gpClass(e.grau)}">${gpLabel(e.grau)}</span></td>
       <td class="td-action">
         <div style="display:flex;gap:6px;justify-content:center">
@@ -1540,6 +1549,8 @@ function editarEvento(id) {
   document.getElementById('dt-fim').value = evt.dtFim || '';
   document.getElementById('local-input').value = evt.local || '';
   document.getElementById('obs').value = evt.obs || '';
+  const aiLinkEl = document.getElementById('ai-link');
+  if (aiLinkEl) aiLinkEl.value = evt.link || '';
   if (evt.dtInicio && evt.dtFim) calcDuracao();
   if (evt.local) {
     const ld = document.getElementById('local-display');
@@ -1597,6 +1608,7 @@ function exportarPDF() {
           ${gpLabel(e.grau)}
         </span>
       </td>
+      <td style="font-size:11px">${e.link ? `<a href="${e.link}" style="color:#1a56db;word-break:break-all">${e.link}</a>` : '—'}</td>
     </tr>`).join('');
 
   const total = evts.length;
@@ -1643,7 +1655,7 @@ function exportarPDF() {
     <div class="stat s3"><div class="stat-lbl">Grau 3 — Muito Alto</div><div class="stat-val">${g3}</div></div>
   </div>
   <table>
-    <thead><tr><th>Identificação</th><th>Início</th><th>Término</th><th>Local</th><th style="text-align:center">Classificação</th></tr></thead>
+    <thead><tr><th>Identificação</th><th>Início</th><th>Término</th><th>Local</th><th style="text-align:center">Classificação</th><th>Reportagem</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
   <div class="footer">SEDEC-RJ · Matriz ICR · Escala de Impactos de Incêndios Florestais</div>
