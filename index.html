@@ -218,9 +218,9 @@ body{font-family:var(--sans);background:var(--gray-100);color:var(--gray-900);fo
 .tip-icon{font-size:10px;opacity:.55;font-style:normal;flex-shrink:0}
 [data-tip="1"]{position:relative}
 
-.opt.s0{border-color:var(--gray-400);background:var(--gray-200);box-shadow:0 0 0 3px rgba(0,0,0,.06)}
-.opt.s0 .opt-badge{background:var(--gray-300);color:var(--gray-700);font-weight:700}
-.opt.s0 .opt-lbl{color:var(--gray-700);font-weight:600}
+.opt.s0{border-color:var(--gray-400)!important;background:var(--gray-200)!important;box-shadow:0 0 0 3px rgba(0,0,0,.09)!important;transform:none}
+.opt.s0 .opt-badge{background:var(--gray-300)!important;color:var(--gray-700)!important;font-weight:700!important}
+.opt.s0 .opt-lbl{color:var(--gray-700)!important;font-weight:600!important}
 
 .opt.s1{border-color:var(--g1-border);background:var(--g1-light);box-shadow:0 0 0 3px rgba(192,94,0,.1)}
 .opt.s1 .opt-badge{background:#ffe0b2;color:var(--g1)}
@@ -435,6 +435,14 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   .lista-table th:nth-child(4),.lista-table td:nth-child(4){display:none}
   .lista-table th:nth-child(5),.lista-table td:nth-child(5){display:none}
   .stat-val{font-size:20px}
+
+  /* Reforço do estado selecionado G0 no mobile (touch devices) */
+  .opt.s0{-webkit-tap-highlight-color:transparent;border-color:var(--gray-400)!important;background:var(--gray-200)!important;box-shadow:0 0 0 3px rgba(0,0,0,.1)!important}
+  .opt.s0 .opt-badge{background:var(--gray-300)!important;color:var(--gray-700)!important}
+  .opt.s0 .opt-lbl{color:var(--gray-700)!important;font-weight:600!important}
+  /* Remover hover que não funciona em touch */
+  .opt:hover{transform:none;box-shadow:none}
+  .opt.s0:hover,.opt.s1:hover,.opt.s2:hover,.opt.s3:hover{transform:none}
 }
 
 /* ══ PRINT ══ */
