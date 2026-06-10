@@ -148,6 +148,7 @@ body{font-family:var(--sans);background:var(--gray-100);color:var(--gray-900);fo
   flex-shrink:0;font-family:var(--mono);
   transition:all .2s;
 }
+.crit-card.done-0 .crit-num{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.8)}
 .crit-card.done-1 .crit-num{background:rgba(251,146,60,.2);border-color:rgba(251,146,60,.6);color:#fb923c}
 .crit-card.done-2 .crit-num{background:rgba(248,113,113,.2);border-color:rgba(248,113,113,.6);color:#f87171}
 .crit-card.done-3 .crit-num{background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.6);color:#a78bfa}
@@ -176,7 +177,7 @@ body{font-family:var(--sans);background:var(--gray-100);color:var(--gray-900);fo
 .crit-badge.g1{background:rgba(251,146,60,.2);border-color:rgba(251,146,60,.4);color:#fb923c}
 .crit-badge.g2{background:rgba(248,113,113,.2);border-color:rgba(248,113,113,.4);color:#f87171}
 .crit-badge.g3{background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.4);color:#a78bfa}
-.crit-badge.g0{background:rgba(255,255,255,.07);color:rgba(255,255,255,.3)}
+.crit-badge.g0{background:rgba(255,255,255,.15);color:rgba(255,255,255,.75);border-color:rgba(255,255,255,.25)}
 
 /* ══ SUBITENS ══ */
 .sub-block{padding:14px 16px;background:var(--gray-50)}
@@ -385,6 +386,9 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 .pill-item.pg1{background:var(--g1-light);border-color:var(--g1-border)}
 .pill-item.pg2{background:var(--g2-light);border-color:var(--g2-border)}
 .pill-item.pg3{background:var(--g3-light);border-color:var(--g3-border)}
+.pill-item.p0{background:var(--gray-100);border-color:var(--gray-300)}
+.pill-item.p0 .pill-name{color:var(--gray-500)}
+.pill-item.p0 .pill-tag{background:var(--gray-200);color:var(--gray-500)}
 .pill-num{font-family:var(--mono);font-size:10px;color:var(--gray-400);min-width:14px}
 .pill-name{font-size:11px;font-weight:500;color:var(--gray-600);flex:1}
 .pg1 .pill-name{color:var(--g1)}.pg2 .pill-name{color:var(--g2)}.pg3 .pill-name{color:var(--g3)}
@@ -433,7 +437,6 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
   .lista-table th:nth-child(3),.lista-table td:nth-child(3),
   .lista-table th:nth-child(4),.lista-table td:nth-child(4){display:none}
-  .lista-table th:nth-child(5),.lista-table td:nth-child(5){display:none}
   .stat-val{font-size:20px}
 
   /* Reforço do estado selecionado G0 no mobile (touch devices) */
@@ -701,6 +704,53 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 .alerta-grau-close{background:none;border:none;cursor:pointer;color:var(--gray-400);
   font-size:18px;line-height:1;flex-shrink:0;padding:0 2px;transition:color .15s}
 .alerta-grau-close:hover{color:var(--g2)}
+
+/* ══ BOTÕES FIXOS NO RODAPÉ — MOBILE ══ */
+@media(max-width:640px){
+  /* Sidebar: esconder btns-wrap e campos de obs na posição normal */
+  .side-col .btns-wrap { display: none !important; }
+
+  /* Barra fixa no rodapé */
+  .mobile-fab-bar {
+    display: flex !important;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--white);
+    border-top: 1px solid var(--gray-200);
+    padding: 10px 12px env(safe-area-inset-bottom, 8px);
+    gap: 8px;
+    z-index: 400;
+    box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+  }
+  .mobile-fab-bar .btn {
+    flex: 1;
+    padding: 9px 4px;
+    font-size: 11px;
+    gap: 4px;
+    border-radius: var(--r-sm);
+  }
+  .mobile-fab-bar .btn svg { width: 13px; height: 13px; }
+  /* Espaço para não esconder conteúdo sob a barra */
+  .screen-form-inner { padding-bottom: 80px; }
+}
+@media(min-width:641px){
+  .mobile-fab-bar { display: none !important; }
+}
+
+@media(max-width:640px){
+  .del-btn{
+    width:36px;height:36px;font-size:18px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:var(--r-sm);
+    border:1px solid var(--gray-200);
+    background:var(--gray-50);
+  }
+  .del-btn:hover{border-color:var(--g2-border);background:var(--g2-light);color:var(--g2)}
+  .lista-table td{padding:10px 8px;font-size:12px}
+  .lista-table th{padding:10px 8px;font-size:10px}
+  .td-evt{max-width:110px}
+  .td-local{max-width:90px}
+}
 </style>
   <!-- Firebase SDK -->
   <script type="module">
@@ -775,6 +825,7 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 
 <!-- PAGE -->
 <div class="screen show" id="screen-form">
+<div class="screen-form-inner">
 <div class="page">
 
   <!-- FORMULÁRIO -->
@@ -928,6 +979,28 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 </div>
 
 </div><!-- /page -->
+
+<!-- BARRA FIXA MOBILE -->
+<div class="mobile-fab-bar" id="mobile-fab-bar">
+  <button class="btn btn-save" id="btn-save-mobile" onclick="salvarEvento()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+    Salvar
+  </button>
+  <button class="btn btn-export" onclick="exportarTxt()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Exportar
+  </button>
+  <button class="btn btn-print" onclick="window.print()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Imprimir
+  </button>
+  <button class="btn btn-reset" onclick="resetar()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+    Limpar
+  </button>
+</div>
+
+</div><!-- /screen-form-inner -->
 </div><!-- /screen-form -->
 
 <!-- SCREEN LISTA -->
@@ -1096,12 +1169,12 @@ function recalc(){
   const filled=gs.filter(g=>g!==null).length;
   DATA.forEach((c,i)=>{
     const g=gs[i];
-    document.getElementById("cc"+c.id).className="crit-card"+(g!==null&&g>0?" done-"+g:"");
+    document.getElementById("cc"+c.id).className="crit-card"+(g!==null&&g>0?" done-"+g:g===0?" done-0":"");
     const badge=document.getElementById("cb"+c.id);
     const pill=document.getElementById("pi"+c.id);
     const pt=document.getElementById("pt"+c.id);
     if(g===null){badge.className="crit-badge";badge.textContent="—";pill.className="pill-item";pt.textContent="—"}
-    else if(g===0){badge.className="crit-badge g0";badge.textContent="✗";pill.className="pill-item";pt.textContent="✗"}
+    else if(g===0){badge.className="crit-badge g0";badge.textContent="Não atingido";pill.className="pill-item p0";pt.textContent="✗"}
     else{badge.className="crit-badge g"+g;badge.textContent="Grau "+g;pill.className="pill-item pg"+g;pt.textContent="G"+g}
   });
   const c1=gs.filter(g=>g!==null&&g>=1).length;
@@ -1825,11 +1898,13 @@ recalc = function() {
   const c3=gs.filter(g=>g!==null&&g>=3).length;
   let final = 0;
   if (filled >= 3) { if(c3>=3) final=3; else if(c2>=3) final=2; else if(c1>=3) final=1; }
-  const btn = document.getElementById('btn-save');
-  if (btn) {
-    if (final > 0) btn.classList.add('ready');
-    else btn.classList.remove('ready');
-  }
+  ['btn-save','btn-save-mobile'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) {
+      if (final > 0) btn.classList.add('ready');
+      else btn.classList.remove('ready');
+    }
+  });
 };
 
 // Init — badge e lista são gerenciados pelo listener do Firebase
