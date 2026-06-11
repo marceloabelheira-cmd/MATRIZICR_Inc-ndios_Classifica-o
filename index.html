@@ -77,6 +77,7 @@ body{font-family:var(--sans);background:var(--gray-100);color:var(--gray-900);fo
   font-size:17px;font-weight:800;
   color:#fff;letter-spacing:-.01em;line-height:1.2;
   text-shadow:0 2px 6px rgba(0,0,0,.25);
+  word-break:break-word;
 }
 .header-sub{
   font-size:10px;color:rgba(255,255,255,.75);
@@ -419,24 +420,26 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   .stats-row{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:640px){
-  .header-inner{padding:0 10px;gap:8px}
-  .header-logo{height:36px;width:36px}
-  .header-main{font-size:13px}
+  .header-inner{padding:0 8px;gap:6px;min-height:56px;height:auto;padding-top:6px;padding-bottom:6px}
+  .header-logo{height:34px;width:34px}
+  .header-main{font-size:12px;line-height:1.25}
   .header-sub{display:none}
   .header-clock{display:none}
   .header-divider{display:none}
-  .nav-tab{font-size:10px;padding:4px 8px}
+  .nav-tabs{gap:3px}
+  .nav-tab{font-size:10px;padding:4px 7px;line-height:1.3}
+  .dash-link-header{display:none!important}
   .page{padding:8px 8px 60px;gap:8px}
   .opts-grid{grid-template-columns:repeat(2,1fr)}
   .crit-desc{display:none}
   .dates-row{grid-template-columns:1fr}
-  .lista-page{padding:12px 10px 60px}
+  .lista-page{padding:8px 4px 80px}
+  .mobile-evt-card{margin:4px 4px 6px}
   .lista-topbar{flex-direction:column;align-items:stretch;gap:10px}
   .lista-actions{flex-direction:column;gap:8px}
   .filter-btns{flex-wrap:wrap}
   .stats-row{grid-template-columns:repeat(2,1fr);gap:8px}
-  .lista-table .tr-main th:nth-child(n+2),
-  .lista-table .tr-main td:nth-child(n+2){display:none}
+  .lista-table .tr-main { display: none; }
   .stat-val{font-size:20px}
 
   /* Reforço do estado selecionado G0 no mobile (touch devices) */
@@ -774,15 +777,20 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
   box-shadow: var(--sh-sm);
 }
 .mec-row1 {
-  display: flex; align-items: center;
-  justify-content: space-between; gap: 10px;
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 8px;
   padding: 12px 14px 4px;
 }
 .mec-name {
-  font-size: 14px; font-weight: 700;
-  color: var(--gray-900); line-height: 1.3; flex: 1;
+  font-size: 13px; font-weight: 700;
+  color: var(--gray-900); line-height: 1.3;
+  flex: 1; min-width: 0; word-break: break-word;
 }
-.mec-row1 .grau-pill { font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+.mec-row1 .grau-pill {
+  font-size: 10px; white-space: nowrap;
+  flex-shrink: 0; padding: 4px 8px;
+  max-width: 130px;
+}
 .mec-row2 {
   padding: 2px 14px 8px;
   font-size: 12px; color: var(--gray-500);
@@ -804,14 +812,15 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
 .mec-sep { color: var(--gray-300); font-size: 14px; }
 .mec-row4 {
   display: flex; align-items: center; gap: 8px;
-  padding: 10px 14px; flex-wrap: wrap;
+  padding: 10px 14px; flex-wrap: wrap; overflow: hidden;
 }
 .mec-btn {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: var(--r-sm);
+  padding: 7px 12px; border-radius: var(--r-sm);
   font-family: var(--sans); font-size: 12px; font-weight: 600;
   cursor: pointer; text-decoration: none; border: 1.5px solid;
-  transition: all .15s; white-space: nowrap;
+  transition: all .15s; white-space: nowrap; flex-shrink: 0;
+  max-width: 100%;
 }
 .mec-edit { color: var(--navy); border-color: #c7d7f9; background: var(--blue-light); }
 .mec-edit:hover { background: #dae4fb; }
@@ -876,7 +885,19 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
       <div class="header-main">Matriz ICR (Identificação, Classificação e Registro) — Incêndios Florestais</div>
       <div class="header-sub">SEDEC-RJ · GIGR-SEIF · Escala de Impactos &nbsp;·&nbsp; <a href="https://www.sciencedirect.com/science/article/pii/S2590061719300535" target="_blank" class="header-link" title="Metodologia da Escala de Impacto publicada em artigo internacional">metodologia da Escala de Impactos já foi publicada em artigo internacional ↗</a></div>
     </div>
-    <div class="nav-tabs">
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:auto">
+      <a href="https://marceloabelheira-cmd.github.io/IF2025/#2026" target="_blank"
+        style="font-size:10px;font-weight:600;color:rgba(255,255,255,.9);text-decoration:none;
+               background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.25);
+               border-radius:var(--r-full);padding:3px 10px;white-space:nowrap;
+               display:flex;align-items:center;gap:5px;transition:background .15s"
+        onmouseover="this.style.background='rgba(0,0,0,.35)'"
+        onmouseout="this.style.background='rgba(0,0,0,.2)'"
+        title="Dashboard de Ocorrências de Incêndios Florestais 2025">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard de Ocorrências
+      </a>
+      <div class="nav-tabs">
       <button class="nav-tab active" id="tab-form" onclick="irPara('form')">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:-1px;margin-right:5px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
         Classificação
@@ -887,7 +908,8 @@ input[type="date"].field-input{padding:8px 10px;font-size:12px}
         <span id="lista-count-badge" style="display:none;background:rgba(255,255,255,.25);font-size:10px;padding:1px 6px;border-radius:999px;margin-left:4px" id="badge-count">0</span>
       </button>
     </div>
-    <div class="header-clock" id="clock">—</div>
+      <div class="header-clock" id="clock">—</div>
+    </div>
   </div>
 </header>
 
@@ -1767,7 +1789,7 @@ function renderLista() {
         <div class="mobile-evt-card">
           <div class="mec-row1">
             <span class="mec-name">${e.evento}</span>
-            <span class="grau-pill ${gpClass(e.grau)}">${['','G1','G2','G3'][e.grau]||'—'}</span>
+            <span class="grau-pill ${gpClass(e.grau)}" style="font-size:10px;padding:4px 8px;white-space:nowrap;flex-shrink:0">${['','Grau 1 — Moderado','Grau 2 — Alto','Grau 3 — Muito Alto'][e.grau]||'—'}</span>
           </div>
           <div class="mec-row2">
             <span class="mec-local">${e.local||'—'}</span>
